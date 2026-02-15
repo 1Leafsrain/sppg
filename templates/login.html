@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Login - SPPG Inventaris MBG{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <h1 class="login-title">
+            <i class="fas fa-heartbeat"></i> SPPG Inventaris MBG
+        </h1>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">
+            Satuan Pelayanan Pemenuhan Gizi<br>
+            Program Makan Bergizi Gratis
+        </p>
+        
+        <form class="login-form" method="POST" action="{{ url_for('login') }}">
+            <div class="form-group">
+                <label class="form-label" for="username">
+                    <i class="fas fa-user"></i> Username
+                </label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="password">
+                    <i class="fas fa-lock"></i> Password
+                </label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+            
+            <div style="margin-top: 30px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
+                <h4 style="margin-bottom: 10px; color: #2c3e50;"><i class="fas fa-info-circle"></i> Informasi Login</h4>
+                <table style="width: 100%; font-size: 0.9rem;">
+                    <tr>
+                        <td><strong>Admin:</strong></td>
+                        <td>admin / admin123</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gudang:</strong></td>
+                        <td>gudang / gudang123</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Distribusi:</strong></td>
+                        <td>distribusi / dist123</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pimpinan:</strong></td>
+                        <td>pimpinan / pimp123</td>
+                    </tr>
+                </table>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

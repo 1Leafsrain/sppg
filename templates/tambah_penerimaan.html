@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Tambah Penerimaan - SPPG{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-truck-loading"></i> Tambah Penerimaan Barang</h2>
+        <a href="{{ url_for('penerimaan') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+    </div>
+    
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('tambah_penerimaan') }}" id="formTambahPenerimaan">
+            <h4 class="mb-4" style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+                <i class="fas fa-info-circle"></i> Informasi Penerimaan
+            </h4>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">No. Penerimaan *</label>
+                        <input type="text" class="form-control" name="no_penerimaan" 
+                               value="{{ no_penerimaan_otomatis }}" required readonly>
+                        <small class="text-muted">Nomor otomatis, tidak dapat diubah</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Tanggal *</label>
+                        <input type="date" class="form-control" name="tanggal" 
+                               value="{{ today }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Bahan *</label>
+                        <select class="form-control" name="bahan_id" required>
+                            <option value="">Pilih Bahan</option>
+                            {% for bahan in bahan_list %}
+                            <option value="{{ bahan.id }}" data-satuan="{{ bahan.nama_satuan }}">
+                                {{ bahan.kode_bahan }} - {{ bahan.nama_bahan }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Jumlah *</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" name="jumlah" min="0.01" step="0.01" required>
+                            <span class="input-group-text" id="satuan-display">-</span>
+                        </div>
+                        <small class="text-muted">Jumlah yang diterima</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Satuan *</label>
+                        <select class="form-control" name="satuan_id" required>
+                            <option value="">Pilih Satuan</option>
+                            {% for satuan in satuan_list %}
+                            <option value="{{ satuan.id }}">{{ satuan.nama_satuan }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Harga Satuan (Rp)</label>
+                        <input type="number" class="form-control" name="harga_satuan" min="0" step="100">
+                        <small class="text-muted">Harga per unit/satuan</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Total Harga</label>
+                        <div class="form-control" style="background-color: #f8f9fa; font-weight: bold;" id="total-harga-display">
+                            Rp 0
+                        </div>
+                        <input type="hidden" name="total_harga" id="total-harga">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Supplier</label>
+                        <input type="text" class="form-control" name="supplier" 
+                               placeholder="Nama supplier/perusahaan">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">No. Batch</label>
+                        <input type="text" class="form-control" name="no_batch" 
+                               placeholder="Nomor batch produksi">
+                    </div>
+                </div>
+            </div>
+            
+            <h4 class="mt-5 mb-4" style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+                <i class="fas fa-calendar-alt"></i> Informasi Kadaluarsa
+            </h4>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="form-label">Tanggal Produksi</label>
+                        <input type="date" class="form-control" name="tanggal_produksi">
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="form-label">Tanggal Kadaluarsa *</label>
+                        <input type="date" class="form-control" name="tanggal_kadaluarsa" required>
+                        <small class="text-muted">Wajib diisi untuk monitoring</small>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="form-label">Kondisi Barang</label>
+                        <select class="form-control" name="kondisi">
+                            <option value="baik">Baik</option>
+                            <option value="rusak_sebagian">Rusak Sebagian</option>
+                            <option value="rusak_total">Rusak Total</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <h4 class="mt-5 mb-4" style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+                <i class="fas fa-user-check"></i> Informasi Penerima
+            </h4>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Nama Penerima *</label>
+                        <input type="text" class="form-control" name="penerima" 
+                               value="{{ session.nama_lengkap }}" required>
+                        <small class="text-muted">Nama petugas yang menerima</small>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Catatan</label>
+                        <textarea class="form-control" name="catatan" rows="2" 
+                                  placeholder="Catatan tambahan..."></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-warning mt-4">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Peringatan:</strong> Pastikan semua informasi sudah benar sebelum menyimpan. 
+                Data yang sudah disimpan akan langsung mempengaruhi stok gudang.
+            </div>
+            
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-save"></i> Simpan Penerimaan
+                </button>
+                <a href="{{ url_for('penerimaan') }}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Batal
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Panduan -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-question-circle"></i> Panduan Penerimaan Barang</h2>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <h5><i class="fas fa-box text-primary"></i> Pemeriksaan Fisik</h5>
+                <ul class="small">
+                    <li>Periksa kondisi kemasan</li>
+                    <li>Cek tanggal produksi/kadaluarsa</li>
+                    <li>Verifikasi jumlah dengan faktur</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5><i class="fas fa-file-contract text-success"></i> Dokumen</h5>
+                <ul class="small">
+                    <li>Faktur pembelian</li>
+                    <li>Sertifikat halal (jika ada)</li>
+                    <li>Sertifikat gizi (jika ada)</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5><i class="fas fa-clipboard-check text-warning"></i> Validasi</h5>
+                <ul class="small">
+                    <li>Cross-check dengan PO</li>
+                    <li>Verifikasi kualitas bahan</li>
+                    <li>Konfirmasi dengan supplier</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelector('input[name="tanggal"]').value = today;
+    
+    // Set tanggal kadaluarsa default (3 bulan dari sekarang)
+    const futureDate = new Date();
+    futureDate.setMonth(futureDate.getMonth() + 3);
+    const futureDateStr = futureDate.toISOString().split('T')[0];
+    document.querySelector('input[name="tanggal_kadaluarsa"]').value = futureDateStr;
+    
+    // Update satuan display berdasarkan pilihan bahan
+    const bahanSelect = document.querySelector('select[name="bahan_id"]');
+    const satuanDisplay = document.getElementById('satuan-display');
+    
+    bahanSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const satuan = selectedOption.getAttribute('data-satuan');
+        if (satuan) {
+            satuanDisplay.textContent = satuan;
+        } else {
+            satuanDisplay.textContent = '-';
+        }
+    });
+    
+    // Auto-calculate total harga
+    const hargaSatuanInput = document.querySelector('input[name="harga_satuan"]');
+    const jumlahInput = document.querySelector('input[name="jumlah"]');
+    const totalHargaDisplay = document.getElementById('total-harga-display');
+    const totalHargaHidden = document.getElementById('total-harga');
+    
+    function calculateTotal() {
+        const harga = parseFloat(hargaSatuanInput.value) || 0;
+        const jumlah = parseFloat(jumlahInput.value) || 0;
+        const total = harga * jumlah;
+        
+        totalHargaDisplay.textContent = 'Rp ' + total.toLocaleString('id-ID');
+        totalHargaHidden.value = total;
+    }
+    
+    hargaSatuanInput.addEventListener('input', calculateTotal);
+    jumlahInput.addEventListener('input', calculateTotal);
+    
+    // Validasi form
+    const form = document.getElementById('formTambahPenerimaan');
+    form.addEventListener('submit', function(e) {
+        let valid = true;
+        
+        // Cek tanggal kadaluarsa tidak boleh sebelum tanggal penerimaan
+        const tanggalPenerimaan = new Date(document.querySelector('input[name="tanggal"]').value);
+        const tanggalKadaluarsa = new Date(document.querySelector('input[name="tanggal_kadaluarsa"]').value);
+        
+        if (tanggalKadaluarsa <= tanggalPenerimaan) {
+            valid = false;
+            alert('Tanggal kadaluarsa harus setelah tanggal penerimaan!');
+        }
+        
+        if (!valid) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Tambah Monitoring - SPPG{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-clipboard-check"></i> Tambah Monitoring Kualitas</h2>
+        <a href="{{ url_for('monitoring') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+    </div>
+    
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('tambah_monitoring') }}">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Bahan *</label>
+                        <select class="form-control" name="bahan_id" required>
+                            <option value="">Pilih Bahan</option>
+                            {% for bahan in bahan_list %}
+                            <option value="{{ bahan.id }}">
+                                {{ bahan.kode_bahan }} - {{ bahan.nama_bahan }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Pilih bahan yang akan dimonitor</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Tanggal Check *</label>
+                        <input type="date" class="form-control" name="tanggal_check" 
+                               value="{{ today }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Suhu Gudang (°C)</label>
+                        <input type="number" class="form-control" name="suhu_gudang" 
+                               min="-10" max="50" step="0.1" placeholder="Contoh: 18.5">
+                        <small class="text-muted">Standar: 15-25°C untuk bahan makanan</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Kelembaban Gudang (%)</label>
+                        <input type="number" class="form-control" name="kelembaban_gudang" 
+                               min="0" max="100" step="0.1" placeholder="Contoh: 65.0">
+                        <small class="text-muted">Standar: 40-70% untuk bahan makanan</small>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Kondisi Fisik *</label>
+                        <select class="form-control" name="kondisi_fisik" required>
+                            <option value="sangat_baik">Sangat Baik</option>
+                            <option value="baik" selected>Baik</option>
+                            <option value="cukup">Cukup</option>
+                            <option value="buruk">Buruk</option>
+                        </select>
+                        <small class="text-muted">Kondisi fisik bahan</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Kondisi Kemasan *</label>
+                        <select class="form-control" name="kondisi_kemasan" required>
+                            <option value="utuh" selected>Utuh</option>
+                            <option value="rusak_ringan">Rusak Ringan</option>
+                            <option value="rusak_berat">Rusak Berat</option>
+                        </select>
+                        <small class="text-muted">Kondisi kemasan bahan</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Status Kadaluarsa *</label>
+                        <select class="form-control" name="status_kadaluarsa" required>
+                            <option value="aman" selected>Aman</option>
+                            <option value="mendekati">Mendekati</option>
+                            <option value="kadaluarsa">Kadaluarsa</option>
+                        </select>
+                        <small class="text-muted">Status berdasarkan tanggal kadaluarsa</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Nama Petugas *</label>
+                        <input type="text" class="form-control" name="petugas" 
+                               value="{{ session.nama_lengkap }}" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Catatan</label>
+                <textarea class="form-control" name="catatan" rows="4" 
+                          placeholder="Catatan hasil monitoring...&#10;&#10;Contoh:&#10;- Tidak ada kerusakan&#10;- Warna masih segar&#10;- Aroma normal&#10;- Tekstur sesuai"></textarea>
+            </div>
+            
+            <!-- Panduan Cepat -->
+            <div class="alert alert-info">
+                <h5><i class="fas fa-lightbulb"></i> Panduan Cepat Monitoring</h5>
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <h6><i class="fas fa-thermometer-half"></i> Suhu Ideal</h6>
+                        <ul class="small mb-0">
+                            <li>Bahan beku: -18°C atau lebih rendah</li>
+                            <li>Bahan dingin: 0-4°C</li>
+                            <li>Bahan kering: 15-25°C</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6><i class="fas fa-tint"></i> Kelembaban Ideal</h6>
+                        <ul class="small mb-0">
+                            <li>Bahan kering: 40-60%</li>
+                            <li>Bahan segar: 60-70%</li>
+                            <li>Hindari >80% (jamur)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6><i class="fas fa-eye"></i> Pemeriksaan Visual</h6>
+                        <ul class="small mb-0">
+                            <li>Warna normal/tidak pudar</li>
+                            <li>Tidak ada jamur/lumut</li>
+                            <li>Tidak ada serangga</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-save"></i> Simpan Monitoring
+                </button>
+                <a href="{{ url_for('monitoring') }}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Batal
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Checklist Monitoring -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-list-check"></i> Checklist Monitoring Kualitas</h2>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5><i class="fas fa-check-circle text-success"></i> Yang Harus Dicek</h5>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="check1">
+                    <label class="form-check-label" for="check1">
+                        Kondisi fisik (warna, tekstur, aroma)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="check2">
+                    <label class="form-check-label" for="check2">
+                        Kondisi kemasan (utuh, bersih, label)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="check3">
+                    <label class="form-check-label" for="check3">
+                        Suhu penyimpanan sesuai standar
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h5><i class="fas fa-times-circle text-danger"></i> Tanda Kerusakan</h5>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="check4">
+                    <label class="form-check-label" for="check4">
+                        Ada jamur/lumut
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="check5">
+                    <label class="form-check-label" for="check5">
+                        Aroma tidak normal
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="check6">
+                    <label class="form-check-label" for="check6">
+                        Kemasan rusak/robek
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelector('input[name="tanggal_check"]').value = today;
+    
+    // Auto-fill suhu dan kelembaban optimal
+    const suhuInput = document.querySelector('input[name="suhu_gudang"]');
+    const kelembabanInput = document.querySelector('input[name="kelembaban_gudang"]');
+    
+    if (!suhuInput.value) {
+        suhuInput.value = '20.0';
+    }
+    
+    if (!kelembabanInput.value) {
+        kelembabanInput.value = '65.0';
+    }
+    
+    // Validasi suhu dan kelembaban
+    suhuInput.addEventListener('change', function() {
+        const suhu = parseFloat(this.value);
+        if (suhu < -10 || suhu > 50) {
+            alert('Suhu tidak realistis! Harap periksa kembali.');
+            this.focus();
+        } else if (suhu < 0 || suhu > 30) {
+            if (!confirm(`Suhu ${suhu}°C di luar range optimal (0-30°C). Lanjutkan?`)) {
+                this.focus();
+            }
+        }
+    });
+    
+    kelembabanInput.addEventListener('change', function() {
+        const kelembaban = parseFloat(this.value);
+        if (kelembaban < 0 || kelembaban > 100) {
+            alert('Kelembaban harus antara 0-100%!');
+            this.focus();
+        } else if (kelembaban > 80) {
+            if (!confirm(`Kelembaban ${kelembaban}% terlalu tinggi (risiko jamur). Lanjutkan?`)) {
+                this.focus();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

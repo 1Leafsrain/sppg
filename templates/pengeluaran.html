@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Pengeluaran Barang - SPPG{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-truck"></i> Pengeluaran Barang</h2>
+        <a href="{{ url_for('tambah_pengeluaran') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Tambah Pengeluaran
+        </a>
+    </div>
+    
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <form method="GET" action="{{ url_for('pengeluaran') }}" class="filter-form">
+            <div class="form-group">
+                <label class="form-label">Tanggal Mulai</label>
+                <input type="date" class="form-control" name="start_date" value="{{ start_date }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Tanggal Akhir</label>
+                <input type="date" class="form-control" name="end_date" value="{{ end_date }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Status</label>
+                <select class="form-control" name="status">
+                    <option value="">Semua Status</option>
+                    <option value="draft" {% if status == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="dikirim" {% if status == 'dikirim' %}selected{% endif %}>Dikirim</option>
+                    <option value="diterima" {% if status == 'diterima' %}selected{% endif %}>Diterima</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Jenis Tujuan</label>
+                <select class="form-control" name="jenis_tujuan">
+                    <option value="">Semua Tujuan</option>
+                    <option value="sekolah" {% if jenis_tujuan == 'sekolah' %}selected{% endif %}>Sekolah</option>
+                    <option value="posyandu" {% if jenis_tujuan == 'posyandu' %}selected{% endif %}>Posyandu</option>
+                    <option value="puskesmas" {% if jenis_tujuan == 'puskesmas' %}selected{% endif %}>Puskesmas</option>
+                    <option value="rumah_sakit" {% if jenis_tujuan == 'rumah_sakit' %}selected{% endif %}>Rumah Sakit</option>
+                    <option value="lainnya" {% if jenis_tujuan == 'lainnya' %}selected{% endif %}>Lainnya</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <a href="{{ url_for('pengeluaran') }}" class="btn btn-warning">
+                    <i class="fas fa-redo"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>No. Pengeluaran</th>
+                    <th>Tanggal</th>
+                    <th>Bahan</th>
+                    <th>Jumlah</th>
+                    <th>Tujuan</th>
+                    <th>Lokasi</th>
+                    <th>Penerima</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pengeluaran %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><strong>{{ item.no_pengeluaran }}</strong></td>
+                    <td>{{ item.tanggal }}</td>
+                    <td>
+                        <div><strong>{{ item.kode_bahan }}</strong></div>
+                        <small>{{ item.nama_bahan }}</small>
+                    </td>
+                    <td>
+                        {{ item.jumlah|format_number }} {{ item.nama_satuan }}
+                    </td>
+                    <td>
+                        {% if item.jenis_tujuan == 'sekolah' %}
+                        <span class="badge bg-primary">Sekolah</span>
+                        {% elif item.jenis_tujuan == 'posyandu' %}
+                        <span class="badge bg-success">Posyandu</span>
+                        {% elif item.jenis_tujuan == 'puskesmas' %}
+                        <span class="badge bg-info">Puskesmas</span>
+                        {% elif item.jenis_tujuan == 'rumah_sakit' %}
+                        <span class="badge bg-warning">Rumah Sakit</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Lainnya</span>
+                        {% endif %}
+                        <br>
+                        <small>{{ item.nama_tujuan }}</small>
+                    </td>
+                    <td>
+                        {% if item.alamat_tujuan %}
+                            <small>{{ item.alamat_tujuan[:50] }}{% if item.alamat_tujuan|length > 50 %}...{% endif %}</small>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ item.penerima or '-' }}</td>
+                    <td>
+                        {% if item.status == 'dikirim' %}
+                        <span class="badge bg-warning">Dikirim</span>
+                        {% elif item.status == 'diterima' %}
+                        <span class="badge bg-success">Diterima</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Draft</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-info" title="Detail" onclick="showDetail({{ item.id }})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        {% if item.status == 'draft' %}
+                        <button class="btn btn-sm btn-success" title="Kirim" onclick="kirimBarang({{ item.id }})">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" style="text-align: center; padding: 30px;">
+                        <i class="fas fa-truck fa-2x text-muted mb-3"></i><br>
+                        Tidak ada data pengeluaran ditemukan
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Summary -->
+    <div class="row" style="display: flex; gap: 20px; margin-top: 20px;">
+        <div class="stat-card" style="flex: 1; padding: 15px; margin: 0;">
+            <div class="stat-icon" style="width: 50px; height: 50px; font-size: 1.5rem; margin-right: 15px; background: #3498db;">
+                <i class="fas fa-truck"></i>
+            </div>
+            <div class="stat-info">
+                <h4>{{ pengeluaran|length }}</h4>
+                <p>Total Transaksi</p>
+            </div>
+        </div>
+        <div class="stat-card" style="flex: 1; padding: 15px; margin: 0;">
+            <div class="stat-icon" style="width: 50px; height: 50px; font-size: 1.5rem; margin-right: 15px; background: #2ecc71;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+                <h4>{{ pengeluaran|selectattr('status', 'equalto', 'dikirim')|list|length }}</h4>
+                <p>Dikirim</p>
+            </div>
+        </div>
+        <div class="stat-card" style="flex: 1; padding: 15px; margin: 0;">
+            <div class="stat-icon" style="width: 50px; height: 50px; font-size: 1.5rem; margin-right: 15px; background: #f39c12;">
+                <i class="fas fa-school"></i>
+            </div>
+            <div class="stat-info">
+                {% set sekolah = pengeluaran|selectattr('jenis_tujuan', 'equalto', 'sekolah')|list|length %}
+                <h4>{{ sekolah }}</h4>
+                <p>Untuk Sekolah</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showDetail(id) {
+    alert('Fitur detail untuk pengeluaran ID: ' + id + ' akan segera tersedia.');
+}
+
+function kirimBarang(id) {
+    if (confirm('Apakah Anda yakin ingin mengirim barang ini?')) {
+        // Kirim request ke server untuk update status
+        fetch('/api/pengeluaran/' + id + '/kirim', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Barang berhasil dikirim!');
+                location.reload();
+            } else {
+                alert('Gagal mengirim barang: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error);
+        });
+    }
+}
+</script>
+{% endblock %}

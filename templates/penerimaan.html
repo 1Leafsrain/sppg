@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Penerimaan Barang - SPPG{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-truck-loading"></i> Penerimaan Barang</h2>
+        <a href="{{ url_for('tambah_penerimaan') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Tambah Penerimaan
+        </a>
+    </div>
+    
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <form method="GET" action="{{ url_for('penerimaan') }}" class="filter-form">
+            <div class="form-group">
+                <label class="form-label">Tanggal Mulai</label>
+                <input type="date" class="form-control" name="start_date" value="{{ start_date }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Tanggal Akhir</label>
+                <input type="date" class="form-control" name="end_date" value="{{ end_date }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Status</label>
+                <select class="form-control" name="status">
+                    <option value="">Semua Status</option>
+                    <option value="draft" {% if status == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="disetujui" {% if status == 'disetujui' %}selected{% endif %}>Disetujui</option>
+                    <option value="ditolak" {% if status == 'ditolak' %}selected{% endif %}>Ditolak</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <a href="{{ url_for('penerimaan') }}" class="btn btn-warning">
+                    <i class="fas fa-redo"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>No. Penerimaan</th>
+                    <th>Tanggal</th>
+                    <th>Bahan</th>
+                    <th>Jumlah</th>
+                    <th>Supplier</th>
+                    <th>Harga Satuan</th>
+                    <th>Total</th>
+                    <th>Kadaluarsa</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in penerimaan %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><strong>{{ item.no_penerimaan }}</strong></td>
+                    <td>{{ item.tanggal }}</td>
+                    <td>
+                        <div><strong>{{ item.kode_bahan }}</strong></div>
+                        <small>{{ item.nama_bahan }}</small>
+                    </td>
+                    <td>
+                        {{ item.jumlah|format_number }} {{ item.nama_satuan }}
+                    </td>
+                    <td>{{ item.supplier or '-' }}</td>
+                    <td class="currency">Rp {{ item.harga_satuan|format_number }}</td>
+                    <td class="currency">Rp {{ item.total_harga|format_number }}</td>
+                    <td>
+                        {% if item.tanggal_kadaluarsa %}
+                            {{ item.tanggal_kadaluarsa }}
+                            {% set hari = (item.tanggal_kadaluarsa - today).days %}
+                            {% if hari <= 30 and hari > 0 %}
+                                <br><small class="text-warning">({{ hari }} hari lagi)</small>
+                            {% elif hari <= 0 %}
+                                <br><small class="text-danger">(Kadaluarsa)</small>
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.status == 'disetujui' %}
+                        <span class="badge bg-success">Disetujui</span>
+                        {% elif item.status == 'ditolak' %}
+                        <span class="badge bg-danger">Ditolak</span>
+                        {% else %}
+                        <span class="badge bg-warning">Draft</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-info" title="Detail" onclick="showDetail('{{ item.id }}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="11" style="text-align: center; padding: 30px;">
+                        <i class="fas fa-truck fa-2x text-muted mb-3"></i><br>
+                        Tidak ada data penerimaan ditemukan
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Summary -->
+    <div class="row" style="display: flex; gap: 20px; margin-top: 20px;">
+        <div class="stat-card" style="flex: 1; padding: 15px; margin: 0;">
+            <div class="stat-icon" style="width: 50px; height: 50px; font-size: 1.5rem; margin-right: 15px; background: #3498db;">
+                <i class="fas fa-boxes"></i>
+            </div>
+            <div class="stat-info">
+                <h4>{{ penerimaan|length }}</h4>
+                <p>Total Transaksi</p>
+            </div>
+        </div>
+        <div class="stat-card" style="flex: 1; padding: 15px; margin: 0;">
+            <div class="stat-icon" style="width: 50px; height: 50px; font-size: 1.5rem; margin-right: 15px; background: #2ecc71;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+                <h4>{{ penerimaan|selectattr('status', 'equalto', 'disetujui')|list|length }}</h4>
+                <p>Disetujui</p>
+            </div>
+        </div>
+        <div class="stat-card" style="flex: 1; padding: 15px; margin: 0;">
+            <div class="stat-icon" style="width: 50px; height: 50px; font-size: 1.5rem; margin-right: 15px; background: #f39c12;">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <h4>{{ penerimaan|selectattr('status', 'equalto', 'draft')|list|length }}</h4>
+                <p>Draft</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showDetail(id) {
+    alert('Fitur detail untuk penerimaan ID: ' + id + ' akan segera tersedia.');
+    // Implementasi modal atau halaman detail bisa ditambahkan di sini
+}
+</script>
+{% endblock %}

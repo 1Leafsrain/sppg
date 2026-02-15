@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}Laporan Distribusi - SPPG{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-truck"></i> Laporan Distribusi</h2>
+        <div>
+            <button onclick="printLaporan()" class="btn btn-primary">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <a href="{{ url_for('export_distribusi_excel') }}{% if start_date or end_date or jenis_tujuan %}?{% endif %}{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}{% if jenis_tujuan %}jenis_tujuan={{ jenis_tujuan }}{% endif %}" 
+               class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Excel
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <form method="GET" action="{{ url_for('laporan_distribusi') }}" class="filter-form">
+            <div class="form-group">
+                <label class="form-label">Tanggal Mulai</label>
+                <input type="date" class="form-control" name="start_date" value="{{ start_date }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Tanggal Akhir</label>
+                <input type="date" class="form-control" name="end_date" value="{{ end_date }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Jenis Tujuan</label>
+                <select class="form-control" name="jenis_tujuan">
+                    <option value="">Semua Tujuan</option>
+                    <option value="sekolah" {% if jenis_tujuan == 'sekolah' %}selected{% endif %}>Sekolah</option>
+                    <option value="posyandu" {% if jenis_tujuan == 'posyandu' %}selected{% endif %}>Posyandu</option>
+                    <option value="puskesmas" {% if jenis_tujuan == 'puskesmas' %}selected{% endif %}>Puskesmas</option>
+                    <option value="rumah_sakit" {% if jenis_tujuan == 'rumah_sakit' %}selected{% endif %}>Rumah Sakit</option>
+                    <option value="lainnya" {% if jenis_tujuan == 'lainnya' %}selected{% endif %}>Lainnya</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <a href="{{ url_for('laporan_distribusi') }}" class="btn btn-warning">
+                    <i class="fas fa-redo"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row" style="display: flex; gap: 20px; margin-bottom: 30px;">
+        <div class="stat-card" style="flex: 1; padding: 15px; margin: 0; background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); color: white;">
+            <div class="stat-icon" style="width: 50px; height: 50px; font-size: 1.5rem; margin-right: 15px; background: rgba(255,255,255,0.2);">
+                <i class="fas fa-truck"></i>
+            </div>
+            <div class="stat-info">
+                <h4>{{ distribusi|length }}</h4>
+                <p>Total Distribusi</p>
+            </div>
+        </div>
+        <div class="stat-card" style="flex: 1; padding: 15px; margin: 0; background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white;">
+            <div class="stat-icon" style="width: 50px; height: 50px; font-size: 1.5rem; margin-right: 15px; background: rgba(255,255,255,0.2);">
+                <i class="fas fa-weight-hanging"></i>
+            </div>
+            <div class="stat-info">
+                <h4>{{ total_jumlah|format_number }}</h4>
+                <p>Total Jumlah</p>
+            </div>
+        </div>
+        <div class="stat-card" style="flex: 1; padding: 15px; margin: 0; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white;">
+            <div class="stat-icon" style="width: 50px; height: 50px; font-size: 1.5rem; margin-right: 15px; background: rgba(255,255,255,0.2);">
+                <i class="fas fa-school"></i>
+            </div>
+            <div class="stat-info">
+                {% set sekolah = distribusi|selectattr('jenis_tujuan', 'equalto', 'sekolah')|list|length %}
+                <h4>{{ sekolah }}</h4>
+                <p>Untuk Sekolah</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Distribusi per Tujuan Chart -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-chart-pie"></i> Distribusi per Tujuan</h2>
+        </div>
+        <div class="card-body">
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="chartDistribusiTujuanLaporan"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Tanggal</th>
+                    <th>No. Pengeluaran</th>
+                    <th>Bahan</th>
+                    <th>Jumlah</th>
+                    <th>Jenis Tujuan</th>
+                    <th>Nama Tujuan</th>
+                    <th>Alamat</th>
+                    <th>Penerima</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in distribusi %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ item.tanggal }}</td>
+                    <td><strong>{{ item.no_pengeluaran }}</strong></td>
+                    <td>
+                        <div><strong>{{ item.kode_bahan }}</strong></div>
+                        <small>{{ item.nama_bahan }}</small>
+                    </td>
+                    <td class="number">{{ item.jumlah|format_number }} {{ item.nama_satuan }}</td>
+                    <td>
+                        {% if item.jenis_tujuan == 'sekolah' %}
+                        <span class="badge bg-primary">Sekolah</span>
+                        {% elif item.jenis_tujuan == 'posyandu' %}
+                        <span class="badge bg-success">Posyandu</span>
+                        {% elif item.jenis_tujuan == 'puskesmas' %}
+                        <span class="badge bg-info">Puskesmas</span>
+                        {% elif item.jenis_tujuan == 'rumah_sakit' %}
+                        <span class="badge bg-warning">Rumah Sakit</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Lainnya</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.nama_tujuan or '-' }}</td>
+                    <td>
+                        {% if item.alamat_tujuan %}
+                            <small>{{ item.alamat_tujuan[:50] }}{% if item.alamat_tujuan|length > 50 %}...{% endif %}</small>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ item.penerima or '-' }}</td>
+                    <td>
+                        {% if item.status == 'dikirim' %}
+                        <span class="badge bg-warning">Dikirim</span>
+                        {% elif item.status == 'diterima' %}
+                        <span class="badge bg-success">Diterima</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Draft</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" style="text-align: center; padding: 30px;">
+                        <i class="fas fa-truck fa-2x text-muted mb-3"></i><br>
+                        Tidak ada data distribusi ditemukan
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr style="background-color: #f8f9fa; font-weight: bold;">
+                    <td colspan="4" style="text-align: right;">TOTAL DISTRIBUSI:</td>
+                    <td class="number">{{ total_jumlah|format_number }}</td>
+                    <td colspan="5"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    
+    <!-- Summary per Tujuan -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-table"></i> Ringkasan per Tujuan</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Jenis Tujuan</th>
+                            <th>Jumlah Transaksi</th>
+                            <th>Total Jumlah</th>
+                            <th>Persentase</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in distribusi_per_tujuan %}
+                        <tr>
+                            <td>
+                                {% if item.jenis_tujuan == 'sekolah' %}
+                                <span class="badge bg-primary">Sekolah</span>
+                                {% elif item.jenis_tujuan == 'posyandu' %}
+                                <span class="badge bg-success">Posyandu</span>
+                                {% elif item.jenis_tujuan == 'puskesmas' %}
+                                <span class="badge bg-info">Puskesmas</span>
+                                {% elif item.jenis_tujuan == 'rumah_sakit' %}
+                                <span class="badge bg-warning">Rumah Sakit</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Lainnya</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.jumlah_transaksi }}</td>
+                            <td class="number">{{ item.total_jumlah|format_number if item.total_jumlah else 0 }}</td>
+                            <td>
+                                {% if total_jumlah > 0 %}
+                                    {% set persentase = (item.total_jumlah / total_jumlah * 100)|round(1) %}
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar 
+                                            {% if item.jenis_tujuan == 'sekolah' %}bg-primary
+                                            {% elif item.jenis_tujuan == 'posyandu' %}bg-success
+                                            {% elif item.jenis_tujuan == 'puskesmas' %}bg-info
+                                            {% elif item.jenis_tujuan == 'rumah_sakit' %}bg-warning
+                                            {% else %}bg-secondary{% endif %}" 
+                                            style="width: {{ persentase }}%">
+                                            {{ persentase }}%
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Info -->
+    <div class="alert alert-secondary mt-4">
+        <h5><i class="fas fa-download"></i> Ekspor Laporan:</h5>
+        <ul>
+            <li><strong>Print:</strong> Untuk dicetak langsung dari browser</li>
+            <li><strong>Excel:</strong> Format spreadsheet dengan data lengkap dan ringkasan</li>
+            <li><strong>Filter akan diterapkan</strong> pada semua format ekspor</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function printLaporan() {
+    window.print();
+}
+
+// Load chart distribusi per tujuan untuk laporan
+function loadDistribusiTujuanChart() {
+    // Data dari backend
+    const data = {{ distribusi_per_tujuan|tojson|safe }};
+    
+    const labels = data.map(item => {
+        const map = {
+            'sekolah': 'Sekolah',
+            'posyandu': 'Posyandu',
+            'puskesmas': 'Puskesmas',
+            'rumah_sakit': 'Rumah Sakit',
+            'lainnya': 'Lainnya'
+        };
+        return map[item.jenis_tujuan] || item.jenis_tujuan;
+    });
+    
+    const values = data.map(item => parseFloat(item.total_jumlah) || 0);
+    
+    const ctx = document.getElementById('chartDistribusiTujuanLaporan').getContext('2d');
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Distribusi per Tujuan',
+                data: values,
+                backgroundColor: [
+                    '#3498db', '#2ecc71', '#17a2b8', '#f39c12', '#95a5a6'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'right'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: ${value.toLocaleString('id-ID')} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadDistribusiTujuanChart();
+});
+</script>
+{% endblock %}

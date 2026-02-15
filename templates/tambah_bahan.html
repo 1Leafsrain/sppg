@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Tambah Bahan - SPPG{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-box"></i> Tambah Bahan Makanan Baru</h2>
+        <a href="{{ url_for('master_bahan') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+    </div>
+    
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('tambah_bahan') }}" id="formTambahBahan">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Kode Bahan *</label>
+                        <input type="text" class="form-control" id="kode_bahan" name="kode_bahan" 
+                               value="{{ 'MBG-' ~ (range(1000, 9999)|random) }}" required>
+                        <small class="text-muted">Kode unik untuk bahan (contoh: MBG-001)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Nama Bahan *</label>
+                        <input type="text" class="form-control" name="nama_bahan" required>
+                        <small class="text-muted">Nama lengkap bahan makanan</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Kategori *</label>
+                        <select class="form-control" name="kategori_id" required>
+                            <option value="">Pilih Kategori</option>
+                            {% for kategori in kategori_list %}
+                            <option value="{{ kategori.id }}">{{ kategori.nama_kategori }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Satuan *</label>
+                        <select class="form-control" name="satuan_id" required>
+                            <option value="">Pilih Satuan</option>
+                            {% for satuan in satuan_list %}
+                            <option value="{{ satuan.id }}">{{ satuan.nama_satuan }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Stok Minimum</label>
+                        <input type="number" class="form-control" name="stok_minimum" min="0" step="0.01" value="0">
+                        <small class="text-muted">Jumlah minimum stok sebelum restock</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Stok Maksimum</label>
+                        <input type="number" class="form-control" name="stok_maksimum" min="0" step="0.01">
+                        <small class="text-muted">Kapasitas maksimum penyimpanan</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Berat per Unit (gram)</label>
+                        <input type="number" class="form-control" name="berat_per_unit" min="0" step="0.01" value="1.00">
+                        <small class="text-muted">Berat dalam gram per 1 unit</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Kalori per Unit</label>
+                        <input type="number" class="form-control" name="kalori_per_unit" min="0" step="0.01">
+                        <small class="text-muted">Kalori per 1 unit/satuan</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Protein per Unit (gram)</label>
+                        <input type="number" class="form-control" name="protein_per_unit" min="0" step="0.01">
+                        <small class="text-muted">Protein dalam gram per 1 unit</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Keterangan</label>
+                <textarea class="form-control" name="keterangan" rows="3" 
+                          placeholder="Catatan tambahan tentang bahan..."></textarea>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Informasi:</strong> Bahan dengan informasi gizi yang lengkap akan membantu 
+                dalam perencanaan menu untuk pencegahan stunting.
+            </div>
+            
+            <button type="submit" class="btn btn-success btn-lg">
+                <i class="fas fa-save"></i> Simpan Bahan
+            </button>
+            <a href="{{ url_for('master_bahan') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Batal
+            </a>
+        </form>
+    </div>
+</div>
+
+<!-- Panduan -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-question-circle"></i> Panduan Pengisian</h2>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5><i class="fas fa-box text-primary"></i> Informasi Umum</h5>
+                <ul>
+                    <li><strong>Kode Bahan:</strong> Harus unik, gunakan format MBG-XXX</li>
+                    <li><strong>Nama Bahan:</strong> Gunakan nama yang umum dikenal</li>
+                    <li><strong>Kategori:</strong> Pilih sesuai jenis bahan makanan</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h5><i class="fas fa-chart-line text-success"></i> Pengaturan Stok</h5>
+                <ul>
+                    <li><strong>Stok Minimum:</strong> Akan memicu alert saat stok mencapai batas ini</li>
+                    <li><strong>Stok Maksimum:</strong> Batas kapasitas penyimpanan</li>
+                    <li><strong>Informasi Gizi:</strong> Penting untuk perhitungan nutrisi</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate kode bahan jika kosong
+    const kodeBahanInput = document.getElementById('kode_bahan');
+    if (!kodeBahanInput.value) {
+        const timestamp = Date.now().toString().slice(-6);
+        kodeBahanInput.value = `MBG-${timestamp}`;
+    }
+    
+    // Validasi form
+    const form = document.getElementById('formTambahBahan');
+    form.addEventListener('submit', function(e) {
+        let valid = true;
+        
+        // Cek required fields
+        const requiredFields = form.querySelectorAll('[required]');
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                valid = false;
+                field.style.borderColor = '#e74c3c';
+                
+                // Tambah pesan error
+                let errorMsg = field.parentNode.querySelector('.error-message');
+                if (!errorMsg) {
+                    errorMsg = document.createElement('div');
+                    errorMsg.className = 'error-message';
+                    errorMsg.style.color = '#e74c3c';
+                    errorMsg.style.fontSize = '0.85rem';
+                    errorMsg.style.marginTop = '5px';
+                    errorMsg.textContent = 'Field ini wajib diisi';
+                    field.parentNode.appendChild(errorMsg);
+                }
+            } else {
+                field.style.borderColor = '#ddd';
+                
+                // Hapus pesan error
+                const errorMsg = field.parentNode.querySelector('.error-message');
+                if (errorMsg) {
+                    errorMsg.remove();
+                }
+            }
+        });
+        
+        if (!valid) {
+            e.preventDefault();
+            alert('Harap isi semua field yang wajib diisi!');
+        }
+    });
+});
+</script>
+{% endblock %}

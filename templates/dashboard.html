@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - SPPG Inventaris MBG{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="stats-container">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+            <i class="fas fa-boxes"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ total_bahan }}</h3>
+            <p>Jenis Bahan</p>
+            <small>Bahan makanan aktif</small>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);">
+            <i class="fas fa-weight-hanging"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ total_stok|format_number }}</h3>
+            <p>Total Stok</p>
+            <small>Semua bahan di gudang</small>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+            <i class="fas fa-truck-loading"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ total_penerimaan|format_number }}</h3>
+            <p>Penerimaan</p>
+            <small>Bulan ini</small>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #f39c12 0%, #d68910 100%);">
+            <i class="fas fa-truck"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ total_pengeluaran|format_number }}</h3>
+            <p>Pengeluaran</p>
+            <small>Bulan ini</small>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Grid -->
+<div class="dashboard-grid">
+    <!-- Left Column -->
+    <div class="dashboard-column">
+        <!-- Stok Per Kategori -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-chart-pie"></i> Stok per Kategori</h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="chartStokKategori"></canvas>
+            </div>
+        </div>
+        
+        <!-- Penerimaan Bulanan -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-chart-line"></i> Penerimaan Bulanan</h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="chartPenerimaanBulanan"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column -->
+    <div class="dashboard-column">
+        <!-- Alert: Bahan Hampir Habis -->
+        <div class="card alert-card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-exclamation-triangle"></i> Bahan Hampir Habis</h2>
+            </div>
+            <div class="card-body">
+                {% if bahan_hampir_habis %}
+                <div class="alert-list">
+                    {% for bahan in bahan_hampir_habis %}
+                    <div class="alert-item">
+                        <div class="alert-item-header">
+                            <strong>{{ bahan.nama_bahan }}</strong>
+                            <span class="badge {% if bahan.jumlah <= bahan.stok_minimum %}bg-danger{% else %}bg-warning{% endif %}">
+                                Stok: {{ bahan.jumlah|format_number }} {{ bahan.nama_satuan }}
+                            </span>
+                        </div>
+                        <div class="alert-item-body">
+                            Stok minimum: {{ bahan.stok_minimum|format_number }} {{ bahan.nama_satuan }}
+                            {% if bahan.jumlah <= bahan.stok_minimum %}
+                            <span class="text-danger"><i class="fas fa-skull-crossbones"></i> KRITIS</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> Semua stok aman
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Alert: Bahan Mendekati Kadaluarsa -->
+        <div class="card alert-card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-calendar-times"></i> Mendekati Kadaluarsa</h2>
+            </div>
+            <div class="card-body">
+                {% if bahan_mendekati_kadaluarsa %}
+                <div class="alert-list">
+                    {% for bahan in bahan_mendekati_kadaluarsa %}
+                    <div class="alert-item">
+                        <div class="alert-item-header">
+                            <strong>{{ bahan.nama_bahan }}</strong>
+                            <span class="badge {% if bahan.hari_menuju_kadaluarsa <= 7 %}bg-danger{% else %}bg-warning{% endif %}">
+                                {{ bahan.hari_menuju_kadaluarsa }} hari lagi
+                            </span>
+                        </div>
+                        <div class="alert-item-body">
+                            No Batch: {{ bahan.no_penerimaan }} | 
+                            Jumlah: {{ bahan.jumlah|format_number }} {{ bahan.nama_satuan }}<br>
+                            Kadaluarsa: {{ bahan.tanggal_kadaluarsa }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> Tidak ada bahan mendekati kadaluarsa
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-bolt"></i> Quick Actions</h2>
+    </div>
+    <div class="card-body">
+        <div class="quick-actions">
+            {% if session.role in ['admin', 'gudang'] %}
+            <a href="{{ url_for('tambah_penerimaan') }}" class="btn btn-success">
+                <i class="fas fa-plus-circle"></i> Tambah Penerimaan
+            </a>
+            {% endif %}
+            
+            {% if session.role in ['admin', 'gudang', 'distribusi'] %}
+            <a href="{{ url_for('tambah_pengeluaran') }}" class="btn btn-primary">
+                <i class="fas fa-minus-circle"></i> Tambah Pengeluaran
+            </a>
+            {% endif %}
+            
+            <a href="{{ url_for('tambah_monitoring') }}" class="btn btn-warning">
+                <i class="fas fa-clipboard-check"></i> Monitoring Kualitas
+            </a>
+            
+            <a href="{{ url_for('laporan_stok') }}" class="btn btn-info">
+                <i class="fas fa-file-alt"></i> Laporan Stok
+            </a>
+            
+            <a href="{{ url_for('laporan_distribusi') }}" class="btn btn-secondary">
+                <i class="fas fa-truck"></i> Laporan Distribusi
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Monitoring Terbaru -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-clipboard-check"></i> Monitoring Kualitas Terbaru</h2>
+        <a href="{{ url_for('monitoring') }}" class="btn btn-sm btn-primary">Lihat Semua</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Bahan</th>
+                    <th>Kondisi Fisik</th>
+                    <th>Status Kadaluarsa</th>
+                    <th>Petugas</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in monitoring_terbaru %}
+                <tr>
+                    <td>{{ item.tanggal_check }}</td>
+                    <td>{{ item.nama_bahan }}</td>
+                    <td>
+                        {% if item.kondisi_fisik == 'sangat_baik' %}
+                        <span class="badge bg-success">Sangat Baik</span>
+                        {% elif item.kondisi_fisik == 'baik' %}
+                        <span class="badge bg-primary">Baik</span>
+                        {% elif item.kondisi_fisik == 'cukup' %}
+                        <span class="badge bg-warning">Cukup</span>
+                        {% else %}
+                        <span class="badge bg-danger">Buruk</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.status_kadaluarsa == 'aman' %}
+                        <span class="badge bg-success">Aman</span>
+                        {% elif item.status_kadaluarsa == 'mendekati' %}
+                        <span class="badge bg-warning">Mendekati</span>
+                        {% else %}
+                        <span class="badge bg-danger">Kadaluarsa</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.petugas }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

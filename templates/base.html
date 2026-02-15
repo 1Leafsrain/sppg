@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SPPG - Inventaris Gudang MBG{% endblock %}</title>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS Custom -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if session.logged_in %}
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <i class="fas fa-heartbeat"></i>
+            SPPG - Inventaris MBG
+        </div>
+        <div class="navbar-menu">
+            <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            
+            {% if session.role in ['admin', 'gudang'] %}
+            <a href="{{ url_for('master_bahan') }}" class="{% if request.endpoint == 'master_bahan' %}active{% endif %}">
+                <i class="fas fa-box"></i> Master Bahan
+            </a>
+            <a href="{{ url_for('penerimaan') }}" class="{% if request.endpoint == 'penerimaan' %}active{% endif %}">
+                <i class="fas fa-truck-loading"></i> Penerimaan
+            </a>
+            {% endif %}
+            
+            {% if session.role in ['admin', 'gudang', 'distribusi'] %}
+            <a href="{{ url_for('pengeluaran') }}" class="{% if request.endpoint == 'pengeluaran' %}active{% endif %}">
+                <i class="fas fa-truck"></i> Pengeluaran
+            </a>
+            {% endif %}
+            
+            <a href="{{ url_for('monitoring') }}" class="{% if request.endpoint == 'monitoring' %}active{% endif %}">
+                <i class="fas fa-clipboard-check"></i> Monitoring
+            </a>
+            
+            <a href="{{ url_for('laporan_stok') }}" class="{% if request.endpoint == 'laporan_stok' %}active{% endif %}">
+                <i class="fas fa-chart-bar"></i> Laporan
+            </a>
+        </div>
+        <div class="navbar-user">
+            <span>
+                <i class="fas fa-user"></i> {{ session.nama_lengkap }}
+                <span class="role-badge">{{ session.role|upper }}</span>
+            </span>
+            <a href="{{ url_for('logout') }}" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </nav>
+    {% endif %}
+    
+    <!-- Container -->
+    <div class="container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {% if category == 'success' %}
+                            <i class="fas fa-check-circle"></i>
+                        {% elif category == 'danger' %}
+                            <i class="fas fa-exclamation-circle"></i>
+                        {% elif category == 'warning' %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle"></i>
+                        {% endif %}
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Content -->
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Footer -->
+    {% if session.logged_in %}
+    <div class="footer">
+        <p>
+            <i class="fas fa-heartbeat"></i> 
+            SPPG - Sistem Inventaris Gudang MBG &copy; 2024
+            <br>
+            <small>Program Makan Bergizi Gratis - Pencegahan Stunting & Gizi Buruk</small>
+        </p>
+    </div>
+    {% endif %}
+    
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

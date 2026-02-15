@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}Tambah Pengeluaran - SPPG{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-truck"></i> Tambah Pengeluaran Barang</h2>
+        <a href="{{ url_for('pengeluaran') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+    </div>
+    
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('tambah_pengeluaran') }}" id="formTambahPengeluaran">
+            <h4 class="mb-4" style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+                <i class="fas fa-info-circle"></i> Informasi Pengeluaran
+            </h4>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">No. Pengeluaran *</label>
+                        <input type="text" class="form-control" name="no_pengeluaran" 
+                               value="{{ no_pengeluaran_otomatis }}" required readonly>
+                        <small class="text-muted">Nomor otomatis, tidak dapat diubah</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Tanggal *</label>
+                        <input type="date" class="form-control" name="tanggal" 
+                               value="{{ today }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Bahan *</label>
+                        <select class="form-control" name="bahan_id" id="bahan_id" required>
+                            <option value="">Pilih Bahan</option>
+                            {% for bahan in bahan_list %}
+                            <option value="{{ bahan.id }}" 
+                                    data-stok="{{ bahan.stok_sekarang if bahan.stok_sekarang else 0 }}"
+                                    data-satuan="{{ bahan.nama_satuan }}">
+                                {{ bahan.kode_bahan }} - {{ bahan.nama_bahan }}
+                                (Stok: {{ bahan.stok_sekarang|format_number if bahan.stok_sekarang else 0 }} {{ bahan.nama_satuan }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="mt-2" id="stok-info" style="display: none; font-size: 0.9rem;"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Jumlah *</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" name="jumlah" id="jumlah" 
+                                   min="0.01" step="0.01" required>
+                            <span class="input-group-text" id="satuan-display">-</span>
+                        </div>
+                        <small class="text-muted">Jumlah yang akan dikeluarkan</small>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Satuan *</label>
+                        <select class="form-control" name="satuan_id" required>
+                            <option value="">Pilih Satuan</option>
+                            {% for satuan in satuan_list %}
+                            <option value="{{ satuan.id }}">{{ satuan.nama_satuan }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Tujuan *</label>
+                        <select class="form-control" name="tujuan" required>
+                            <option value="">Pilih Tujuan</option>
+                            <option value="distribusi">Distribusi Program MBG</option>
+                            <option value="rusak">Barang Rusak</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Jenis Tujuan *</label>
+                        <select class="form-control" name="jenis_tujuan" required>
+                            <option value="">Pilih Jenis Tujuan</option>
+                            <option value="sekolah">Sekolah</option>
+                            <option value="posyandu">Posyandu</option>
+                            <option value="puskesmas">Puskesmas</option>
+                            <option value="rumah_sakit">Rumah Sakit</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <h4 class="mt-5 mb-4" style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+                <i class="fas fa-map-marker-alt"></i> Informasi Tujuan
+            </h4>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Nama Tujuan *</label>
+                        <input type="text" class="form-control" name="nama_tujuan" 
+                               placeholder="Contoh: SDN 01 Jakarta" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Alamat Tujuan</label>
+                        <textarea class="form-control" name="alamat_tujuan" rows="3" 
+                                  placeholder="Alamat lengkap tujuan..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Nama Penerima</label>
+                        <input type="text" class="form-control" name="penerima" 
+                               placeholder="Nama orang yang menerima">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Catatan</label>
+                        <textarea class="form-control" name="catatan" rows="3" 
+                                  placeholder="Catatan tambahan..."></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="alert alert-info">
+                        <i class="fas fa-users"></i>
+                        <strong>Informasi Penerima Manfaat:</strong> 
+                        <div class="mt-2">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="penerima_balita" id="penerima_balita">
+                                <label class="form-check-label" for="penerima_balita">Balita (0-5 tahun)</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="penerima_anak" id="penerima_anak">
+                                <label class="form-check-label" for="penerima_anak">Anak Sekolah (6-12 tahun)</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="penerima_remaja" id="penerima_remaja">
+                                <label class="form-check-label" for="penerima_remaja">Remaja (13-18 tahun)</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="penerima_ibu_hamil" id="penerima_ibu_hamil">
+                                <label class="form-check-label" for="penerima_ibu_hamil">Ibu Hamil</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="penerima_ibu_menyusui" id="penerima_ibu_menyusui">
+                                <label class="form-check-label" for="penerima_ibu_menyusui">Ibu Menyusui</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-warning mt-4">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Peringatan:</strong> Pastikan stok mencukupi sebelum melakukan pengeluaran. 
+                Pengeluaran akan langsung mengurangi stok di sistem.
+            </div>
+            
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-save"></i> Simpan Pengeluaran
+                </button>
+                <a href="{{ url_for('pengeluaran') }}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Batal
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Panduan -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-question-circle"></i> Panduan Pengeluaran Barang</h2>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <h5><i class="fas fa-box text-primary"></i> Pemeriksaan Barang</h5>
+                <ul class="small">
+                    <li>Pastikan stok tersedia</li>
+                    <li>Cek kondisi barang</li>
+                    <li>Verifikasi tanggal kadaluarsa</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5><i class="fas fa-truck text-success"></i> Proses Distribusi</h5>
+                <ul class="small">
+                    <li>Siapkan dokumen pengiriman</li>
+                    <li>Packaging yang aman</li>
+                    <li>Catat suhu selama pengiriman</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5><i class="fas fa-clipboard-check text-warning"></i> Validasi</h5>
+                <ul class="small">
+                    <li>Konfirmasi penerimaan</li>
+                    <li>Dokumen tanda terima</li>
+                    <li>Feedback kualitas</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelector('input[name="tanggal"]').value = today;
+    
+    // Update satuan display dan stok info berdasarkan pilihan bahan
+    const bahanSelect = document.getElementById('bahan_id');
+    const jumlahInput = document.getElementById('jumlah');
+    const satuanDisplay = document.getElementById('satuan-display');
+    const stokInfo = document.getElementById('stok-info');
+    
+    bahanSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const stok = selectedOption.getAttribute('data-stok');
+        const satuan = selectedOption.getAttribute('data-satuan');
+        
+        if (stok && satuan) {
+            satuanDisplay.textContent = satuan;
+            stokInfo.innerHTML = `<i class="fas fa-box"></i> Stok tersedia: <strong>${parseFloat(stok).toLocaleString('id-ID')} ${satuan}</strong>`;
+            stokInfo.style.display = 'block';
+            stokInfo.style.color = '#666';
+        } else {
+            satuanDisplay.textContent = '-';
+            stokInfo.style.display = 'none';
+        }
+    });
+    
+    // Validasi jumlah tidak melebihi stok
+    jumlahInput.addEventListener('input', function() {
+        const selectedOption = bahanSelect.options[bahanSelect.selectedIndex];
+        const stok = parseFloat(selectedOption.getAttribute('data-stok')) || 0;
+        const jumlah = parseFloat(this.value) || 0;
+        
+        if (stok && jumlah > stok) {
+            this.style.borderColor = '#e74c3c';
+            stokInfo.innerHTML = `<i class="fas fa-exclamation-triangle text-danger"></i> Stok tidak mencukupi! Stok tersedia: <strong>${stok.toLocaleString('id-ID')}</strong>`;
+            stokInfo.style.color = '#e74c3c';
+        } else if (stok) {
+            this.style.borderColor = '#ddd';
+            const satuan = selectedOption.getAttribute('data-satuan');
+            stokInfo.innerHTML = `<i class="fas fa-box"></i> Stok tersedia: <strong>${stok.toLocaleString('id-ID')} ${satuan}</strong>`;
+            stokInfo.style.color = '#666';
+        }
+    });
+    
+    // Auto-fill nama tujuan berdasarkan jenis tujuan
+    const jenisTujuanSelect = document.querySelector('select[name="jenis_tujuan"]');
+    const namaTujuanInput = document.querySelector('input[name="nama_tujuan"]');
+    
+    jenisTujuanSelect.addEventListener('change', function() {
+        if (!namaTujuanInput.value) {
+            const jenis = this.value;
+            let contoh = '';
+            
+            switch(jenis) {
+                case 'sekolah':
+                    contoh = 'SDN 01 Jakarta';
+                    break;
+                case 'posyandu':
+                    contoh = 'Posyandu Melati';
+                    break;
+                case 'puskesmas':
+                    contoh = 'Puskesmas Sehat';
+                    break;
+                case 'rumah_sakit':
+                    contoh = 'RSUD Kota';
+                    break;
+            }
+            
+            if (contoh) {
+                namaTujuanInput.placeholder = 'Contoh: ' + contoh;
+            }
+        }
+    });
+    
+    // Validasi form
+    const form = document.getElementById('formTambahPengeluaran');
+    form.addEventListener('submit', function(e) {
+        let valid = true;
+        
+        // Cek stok mencukupi
+        const selectedOption = bahanSelect.options[bahanSelect.selectedIndex];
+        const stok = parseFloat(selectedOption.getAttribute('data-stok')) || 0;
+        const jumlah = parseFloat(jumlahInput.value) || 0;
+        
+        if (jumlah > stok) {
+            valid = false;
+            alert('Stok tidak mencukupi! Stok tersedia: ' + stok.toLocaleString('id-ID'));
+        }
+        
+        // Cek minimal satu penerima manfaat dicentang
+        const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+        let checked = false;
+        checkboxes.forEach(cb => {
+            if (cb.checked) checked = true;
+        });
+        
+        if (!checked) {
+            valid = false;
+            alert('Harap pilih minimal satu jenis penerima manfaat!');
+        }
+        
+        if (!valid) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}
